@@ -40,12 +40,12 @@ return L.Class.extend({
 
 		return Promise.all(
 			window.tempStatusZones.map(
-				zone => L.resolveDefault(fs.read(zone[1] + '/temp'), null)
+				zone => fs.trimmed(zone[1] + '/temp')
 		)).catch(e => {});
 	},
 
 	render: function(tempData) {
-		if(!tempData || tempData[0] == null) return;
+		if(!tempData) return;
 
 		let tempTable = E('div', { 'class': 'table' },
 			E('div', { 'class': 'tr table-titles' }, [
