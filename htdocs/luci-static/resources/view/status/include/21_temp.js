@@ -60,7 +60,7 @@ return L.Class.extend({
 				(tempValue >= this.tempWarning) ? 'background-color:#fff7e2 !important' : null;
 			tempTable.append(
 				E('div', { 'class': 'tr', 'style': rowStyle }, [
-					E('div', { 'class': 'td left', 'width': '33%', 'data-title': _('Thermal zone') }, window.tempStatusZones[i][2]),
+					E('div', { 'class': 'td left', 'data-title': _('Thermal zone') }, window.tempStatusZones[i][2]),
 					E('div', { 'class': 'td left', 'data-title': _('Temperature') }, tempValue ? tempValue + ' °C' : '-'),
 				])
 			);
