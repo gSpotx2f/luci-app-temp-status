@@ -2,10 +2,8 @@
 	"luci-app-temp-status": {
 		"description": "Grant access to temp-status procedures",
 		"read": {
-			"file": {
-				"/sys/class/thermal": [ "list" ],
-				"/sys/class/thermal/thermal_zone[0-9]*/temp": [ "read" ],
-				"/sys/class/thermal/thermal_zone[0-9]*/type": [ "read" ]
+			"ubus": {
+				"luci.temp-status": [ "getTempStatus" ]
 			}
 		}
 	}
