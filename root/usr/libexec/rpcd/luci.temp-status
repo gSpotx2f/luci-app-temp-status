@@ -3,7 +3,8 @@
 local json = require "luci.jsonc"
 local fs   = require "nixio.fs"
 
-local sysPath = "/sys/class/thermal"
+local sysHwmon   = "/sys/class/hwmon"
+local sysThermal = "/sys/class/thermal"
 
 local function readFile(path)
 	local s = fs.readfile(path)
@@ -11,25 +12,50 @@ local function readFile(path)
 end
 
 local function list()
-	io.write('{ "getTempStatus": {} }')
+	io.write('{"getTempStatus":{}}')
 end
 
 local function getTempStatus()
-	local dirIter = fs.dir(sysPath)
-	local tzTable = {}
-	if dirIter then
-		for item in dirIter do
-			if item:match("^thermal_zone[0-9]+$") then
+	local sensors = {}
+	-- /sys/class/hwmon
+	local dir = fs.dir(sysHwmon)
+	if dir then
+		local hwmon = {}
+		for item in dir do
+			if item:match("^hwmon[0-9]+$") then
 				local number = tonumber(item:match("[0-9]+"))
-				local temp   = readFile(string.format("%s/%s/temp", sysPath, item))
-				local title  = readFile(string.format("%s/%s/type", sysPath, item))
+				local temp   = readFile(string.format("%s/%s/temp1_input", sysHwmon, item))
+				local title  = readFile(string.format("%s/%s/name", sysHwmon, item))
 				if number ~= nil and temp ~= nil then
-					tzTable[number] = { [1] = item, [2] = tonumber(temp), [3] = title }
+					hwmon[#hwmon + 1] = {
+						number = number, item = item, temp = tonumber(temp), title = title }
 				end
 			end
 		end
+		if #hwmon > 0 then
+			sensors["0"] = hwmon
+		end
 	end
-	io.write(json.stringify(tzTable))
+	-- /sys/class/thermal
+	local dir   = fs.dir(sysThermal)
+	if dir then
+		local thermal = {}
+		for item in dir do
+			if item:match("^thermal_zone[0-9]+$") then
+				local number = tonumber(item:match("[0-9]+"))
+				local temp   = readFile(string.format("%s/%s/temp", sysThermal, item))
+				local title  = readFile(string.format("%s/%s/type", sysThermal, item))
+				if number ~= nil and temp ~= nil then
+					thermal[#thermal + 1] = {
+						number = number, item = item, temp = tonumber(temp), title = title }
+				end
+			end
+		end
+		if #thermal > 0 then
+			sensors["1"] = thermal
+		end
+	end
+	io.write(json.stringify(sensors))
 end
 
 if arg[1] == "list" then

@@ -1,11 +1,11 @@
 'use strict';
-'require rpc';
 'require fs';
+'require rpc';
 
 return L.Class.extend({
-	title: _('Temperature'),
+	title       : _('Temperature'),
 
-	tempWarning: 90,
+	tempWarning : 90,
 
 	tempCritical: 100,
 
@@ -16,36 +16,61 @@ return L.Class.extend({
 	}),
 
 	load: function() {
-		return this.callTempStatus().catch(e => {});
+		return L.resolveDefault(this.callTempStatus(), null);
 	},
 
 	render: function(tempData) {
-		if(!tempData || tempData[1] === undefined) return;
+		if(!tempData) return;
 
 		let tempTable = E('div', { 'class': 'table' },
 			E('div', { 'class': 'tr table-titles' }, [
-				E('div', { 'class': 'th left', 'width': '33%' }, _('Thermal zone')),
+				E('div', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
 				E('div', { 'class': 'th left' }, _('Temperature')),
 			])
 		);
 
-		for(let k in tempData) {
-			let zone = tempData[k][0];
-			let temp = tempData[k][1];
-			let title = tempData[k][2];
-			let tempValue = temp ? Number((temp / 1000).toFixed(1)) : null;
+		for(let [k, v] of Object.entries(tempData)) {
+			v.sort((a, b) => (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0)
 
-			let cellStyle = (tempValue >= this.tempCritical) ? 'color:#f5163b !important; font-weight:bold !important' :
-				(tempValue >= this.tempWarning) ? 'color:#ff821c !important; font-weight:bold !important' : null;
+			for(let i of Object.values(v)) {
+				let sensor    = i.item;
+				let temp      = i.temp;
+				let title     = i.title;
+				let tempValue = temp ? Number((temp / 1000).toFixed(1)) : null;
 
-			tempTable.append(
-				E('div', { 'class': 'tr' }, [
-					E('div', { 'class': 'td left', 'style': cellStyle, 'data-title': _('Thermal zone') }, title || zone),
-					E('div', { 'class': 'td left', 'style': cellStyle, 'data-title': _('Temperature') }, tempValue ? tempValue + ' °C' : '-'),
-				])
-			);
+				let cellStyle = (tempValue >= this.tempCritical) ?
+					'color:#f5163b !important; font-weight:bold !important' :
+					(tempValue >= this.tempWarning) ?
+						'color:#ff821c !important; font-weight:bold !important' : null;
+
+				tempTable.append(
+					E('div', { 'class': 'tr' }, [
+						E('div', {
+								'class': 'td left',
+								'style': cellStyle,
+								'data-title': _('Sensor')
+							},
+							title || sensor
+						),
+						E('div', { 'class': 'td left',
+								'style': cellStyle,
+								'data-title': _('Temperature')
+							},
+							tempValue ? tempValue + ' °C' : '-'),
+					])
+				);
+			};
 		};
 
+		if(tempTable.childNodes.length === 1) {
+			tempTable.append(
+				E('div', { 'class': 'tr placeholder' },
+					E('div', { 'class': 'td' },
+						E('em', {}, _('No temperature sensors available'))
+					)
+				)
+			);
+		};
 		return tempTable;
 	},
 });
