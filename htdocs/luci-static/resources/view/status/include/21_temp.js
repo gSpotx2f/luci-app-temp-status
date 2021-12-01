@@ -36,11 +36,13 @@ return L.Class.extend({
 				let sensor    = i.item;
 				let temp      = i.temp;
 				let title     = i.title;
-				let tempValue = temp ? Number((temp / 1000).toFixed(1)) : null;
+				if(temp !== undefined) {
+					temp = Number((temp / 1000).toFixed(1))
+				};
 
-				let cellStyle = (tempValue >= this.tempCritical) ?
+				let cellStyle = (temp >= this.tempCritical) ?
 					'color:#f5163b !important; font-weight:bold !important' :
-					(tempValue >= this.tempWarning) ?
+					(temp >= this.tempWarning) ?
 						'color:#ff821c !important; font-weight:bold !important' : null;
 
 				tempTable.append(
@@ -56,7 +58,7 @@ return L.Class.extend({
 								'style': cellStyle,
 								'data-title': _('Temperature')
 							},
-							tempValue ? tempValue + ' °C' : '-'),
+							(temp === undefined) ? '-' : temp + ' °C'),
 					])
 				);
 			};
