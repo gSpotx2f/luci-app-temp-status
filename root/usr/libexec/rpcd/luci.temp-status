@@ -18,17 +18,44 @@ end
 local function getTempStatus()
 	local sensors = {}
 	-- /sys/class/hwmon
-	local dir = fs.dir(sysHwmon)
-	if dir then
+	local hwmonDir = fs.dir(sysHwmon)
+	if hwmonDir then
 		local hwmon = {}
-		for item in dir do
+		for item in hwmonDir do
 			if item:match("^hwmon[0-9]+$") then
-				local number = tonumber(item:match("[0-9]+"))
-				local temp   = readFile(string.format("%s/%s/temp1_input", sysHwmon, item))
-				local title  = readFile(string.format("%s/%s/name", sysHwmon, item))
-				if number ~= nil and temp ~= nil then
-					hwmon[#hwmon + 1] = {
-						number = number, item = item, temp = tonumber(temp), title = title }
+				local deviceDirPath = string.format("%s/%s", sysHwmon, item)
+				local deviceDir     = fs.dir(deviceDirPath)
+				if deviceDir then
+					local dNumber = tonumber(item:match("[0-9]+"))
+					local title   = readFile(deviceDirPath .. "/name")
+					local sources = {}
+					for source in deviceDir do
+						if source:match("^temp[0-9]+_input$") then
+							local sNumber = tonumber(source:match("[0-9]+"))
+							local temp    = readFile(
+								string.format("%s/%s", deviceDirPath, source))
+							local label   = readFile(
+								string.format("%s/%s", deviceDirPath, source:gsub("_input$", "_label")))
+							if sNumber ~= nil and temp ~= nil then
+								sources[#sources + 1] = {
+									number = sNumber,
+									item   = source,
+									label  = label,
+									temp   = tonumber(temp),
+								}
+							end
+						end
+					end
+					if dNumber ~= nil then
+						if #sources > 0 then
+							hwmon[#hwmon + 1] = {
+								number  = dNumber,
+								item    = item,
+								title   = title,
+								sources = sources,
+							}
+						end
+					end
 				end
 			end
 		end
@@ -47,7 +74,10 @@ local function getTempStatus()
 				local title  = readFile(string.format("%s/%s/type", sysThermal, item))
 				if number ~= nil and temp ~= nil then
 					thermal[#thermal + 1] = {
-						number = number, item = item, temp = tonumber(temp), title = title }
+						number = number, item = item, title = title, sources = {
+							[1] = { number = 0, item = nil, label = nil, temp = tonumber(temp) }
+						}
+					}
 				end
 			end
 		end
