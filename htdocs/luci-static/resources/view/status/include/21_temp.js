@@ -1,7 +1,8 @@
 'use strict';
+'require baseclass';
 'require rpc';
 
-return L.Class.extend({
+return baseclass.extend({
 	title       : _('Temperature'),
 
 	tempWarning : 90,
@@ -55,14 +56,14 @@ return L.Class.extend({
 					tempTable.append(
 						E('div', { 'class': 'tr' }, [
 							E('div', {
-									'class': 'td left',
-									'style': cellStyle,
+									'class'     : 'td left',
+									'style'     : cellStyle,
 									'data-title': _('Sensor')
 								},
 								name
 							),
-							E('div', { 'class': 'td left',
-									'style': cellStyle,
+							E('div', { 'class'  : 'td left',
+									'style'     : cellStyle,
 									'data-title': _('Temperature')
 								},
 								(temp === undefined) ? '-' : temp + ' °C'),
