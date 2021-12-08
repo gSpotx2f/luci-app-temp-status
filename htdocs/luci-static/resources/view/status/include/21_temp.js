@@ -22,10 +22,10 @@ return baseclass.extend({
 	render: function(tempData) {
 		if(!tempData) return;
 
-		let tempTable = E('div', { 'class': 'table' },
-			E('div', { 'class': 'tr table-titles' }, [
-				E('div', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
-				E('div', { 'class': 'th left' }, _('Temperature')),
+		let tempTable = E('table', { 'class': 'table' },
+			E('tr', { 'class': 'tr table-titles' }, [
+				E('th', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
+				E('th', { 'class': 'th left' }, _('Temperature')),
 			])
 		);
 
@@ -54,15 +54,15 @@ return baseclass.extend({
 							'color:#ff821c !important; font-weight:bold !important' : null;
 
 					tempTable.append(
-						E('div', { 'class': 'tr' }, [
-							E('div', {
+						E('tr', { 'class': 'tr' }, [
+							E('td', {
 									'class'     : 'td left',
 									'style'     : cellStyle,
 									'data-title': _('Sensor')
 								},
 								name
 							),
-							E('div', { 'class'  : 'td left',
+							E('td', { 'class'  : 'td left',
 									'style'     : cellStyle,
 									'data-title': _('Temperature')
 								},
@@ -75,8 +75,8 @@ return baseclass.extend({
 
 		if(tempTable.childNodes.length === 1) {
 			tempTable.append(
-				E('div', { 'class': 'tr placeholder' },
-					E('div', { 'class': 'td' },
+				E('tr', { 'class': 'tr placeholder' },
+					E('td', { 'class': 'td' },
 						E('em', {}, _('No temperature sensors available'))
 					)
 				)
