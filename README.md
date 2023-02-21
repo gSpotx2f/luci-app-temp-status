@@ -3,6 +3,8 @@ Temperature sensors data for the LuCI status page (OpenWrt webUI).
 
 OpenWrt >= 19.07.
 
+**Dependences:** lua, luci-lib-nixio, luci-lib-jsonc.
+
 ## Installation notes
 
 **OpenWrt Snapshot:**
