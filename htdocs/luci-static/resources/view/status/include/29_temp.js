@@ -2,10 +2,46 @@
 'require baseclass';
 'require rpc';
 
+document.head.append(E('style', {'type': 'text/css'},
+`
+:root {
+	--app-temp-status-dark-font-color: #2e2e2e;
+	--app-temp-status-light-font-color: #fff;
+	--app-temp-status-hot-color: #fff7e2;
+	--app-temp-status-crit-color: #ff4e54;
+}
+:root[data-darkmode="true"] {
+	--app-temp-status-dark-font-color: #fff;
+	--app-temp-status-light-font-color: #fff;
+	--app-temp-status-hot-color: #8d7000;
+	--app-temp-status-crit-color: #a93734;
+}
+.temp-status-hot {
+	background-color: var(--app-temp-status-hot-color) !important;
+	color: var(--app-temp-status-dark-font-color) !important;
+}
+.temp-status-hot .td {
+	color: var(--app-temp-status-dark-font-color) !important;
+}
+.temp-status-hot td {
+	color: var(--app-temp-status-dark-font-color) !important;
+}
+.temp-status-crit {
+	background-color: var(--app-temp-status-crit-color) !important;
+	color: var(--app-temp-status-light-font-color) !important;
+}
+.temp-status-crit .td {
+	color: var(--app-temp-status-light-font-color) !important;
+}
+.temp-status-crit td {
+	color: var(--app-temp-status-light-font-color) !important;
+}
+`));
+
 return baseclass.extend({
 	title       : _('Temperature'),
 
-	tempWarning : 90,
+	tempHot     : 90,
 
 	tempCritical: 100,
 
@@ -15,11 +51,15 @@ return baseclass.extend({
 		expect: { '': {} }
 	}),
 
-	load: function() {
+	formatTemp(mc) {
+		return Number((mc / 1000).toFixed(1));
+	},
+
+	load() {
 		return L.resolveDefault(this.callTempStatus(), null);
 	},
 
-	render: function(tempData) {
+	render(tempData) {
 		if(!tempData) return;
 
 		let tempTable = E('table', { 'class': 'table' },
@@ -28,6 +68,8 @@ return baseclass.extend({
 				E('th', { 'class': 'th left' }, _('Temperature')),
 			])
 		);
+
+		let tempArray = [];
 
 		for(let [k, v] of Object.entries(tempData)) {
 			v.sort((a, b) => (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0)
@@ -45,25 +87,44 @@ return baseclass.extend({
 						(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
 
 					if(temp !== undefined) {
-						temp = Number((temp / 1000).toFixed(1));
+						temp = this.formatTemp(temp);
+						tempArray.push(temp);
 					};
 
-					let cellStyle = (temp >= this.tempCritical) ?
-						'color:#f5163b !important; font-weight:bold !important' :
-						(temp >= this.tempWarning) ?
-							'color:#ff821c !important; font-weight:bold !important' : null;
+					let tempHot       = this.tempHot;
+					let tempCritical  = this.tempCritical;
+					let tpoints       = i.tpoints;
+					let tpointsString = '';
+
+					if(tpoints) {
+						for(let i of Object.values(tpoints)) {
+							let t = this.formatTemp(i.temp);
+							tpointsString += `&#10;${i.type}: ${t} °C`;
+
+							if(i.type === 'critical') {
+								tempCritical = t;
+							}
+							else if(i.type === 'hot') {
+								tempHot = t;
+							};
+						};
+					};
+
+					let rowStyle = (temp >= tempCritical) ? ' temp-status-crit':
+						(temp >= tempHot) ? ' temp-status-hot' : '';
 
 					tempTable.append(
-						E('tr', { 'class': 'tr' }, [
+						E('tr', { 'class': 'tr' + rowStyle }, [
 							E('td', {
 									'class'     : 'td left',
-									'style'     : cellStyle,
 									'data-title': _('Sensor')
 								},
-								name
+								(tpointsString.length > 0) ?
+								`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>`
+								: name
 							),
-							E('td', { 'class'  : 'td left',
-									'style'     : cellStyle,
+							E('td', {
+									'class'     : 'td left',
 									'data-title': _('Temperature')
 								},
 								(temp === undefined) ? '-' : temp + ' °C'),
