@@ -46,13 +46,11 @@ local function getTempStatus()
 		local hwmon = {}
 		for item in hwmonDir do
 			if item:match("^hwmon[0-9]+$") then
-				local tPoints
 				local hwmonDirPath  = string.format("%s/%s", sysHwmon, item)
 				local deviceDirPath = fs.readlink(string.format("%s/device", hwmonDirPath))
 				if deviceDirPath then
 					nixio.chdir(hwmonDirPath)
 					tDevPath[fs.realpath(deviceDirPath)] = true
-					tPoints = findTPoints(deviceDirPath)
 				end
 				local deviceDir = fs.dir(hwmonDirPath)
 				if deviceDir then
@@ -61,17 +59,34 @@ local function getTempStatus()
 					local sources = {}
 					for source in deviceDir do
 						if source:match("^temp[0-9]+_input$") then
-							local sNumber = tonumber(source:match("[0-9]+"))
-							local temp    = readFile(
-								string.format("%s/%s", hwmonDirPath, source))
-							local label   = readFile(
-								string.format("%s/%s", hwmonDirPath, source:gsub("_input$", "_label")))
+							local tPoints    = {}
+							local sNumber    = tonumber(source:match("[0-9]+"))
+							local temp       = readFile(string.format(
+								"%s/%s", hwmonDirPath, source))
+							local label      = readFile(string.format(
+								"%s/%s", hwmonDirPath, source:gsub("_input$", "_label")))
+							local tPointEmer = readFile(string.format(
+								"%s/%s", hwmonDirPath, source:gsub("_input$", "_emergency")))
+							if tPointEmer ~= nil then
+								tPoints["0"] = { type = "emergency", temp = tPointEmer }
+							end
+							local tPointCrit = readFile(string.format(
+								"%s/%s", hwmonDirPath, source:gsub("_input$", "_crit")))
+							if tPointCrit ~= nil then
+								tPoints["1"] = { type = "critical", temp = tPointCrit }
+							end
+							local tPointMax  = readFile(string.format(
+								"%s/%s", hwmonDirPath, source:gsub("_input$", "_max")))
+							if tPointMax ~= nil then
+								tPoints["2"] = { type = "max", temp = tPointMax }
+							end
 							if sNumber ~= nil and temp ~= nil then
 								sources[#sources + 1] = {
-									number = sNumber,
-									item   = source,
-									label  = label,
-									temp   = tonumber(temp),
+									number  = sNumber,
+									item    = source,
+									label   = label,
+									temp    = tonumber(temp),
+									tpoints = (next(tPoints) and tPoints or nil),
 								}
 							end
 						end
@@ -83,7 +98,6 @@ local function getTempStatus()
 								item    = item,
 								title   = title,
 								sources = sources,
-								tpoints = tPoints,
 							}
 						end
 					end
@@ -115,10 +129,14 @@ local function getTempStatus()
 							item    = item,
 							title   = title,
 							sources = {
-								[1] = { number = 0, item = nil,
-										label = nil, temp = tonumber(temp) }
+								[1] = {
+									number  = 0,
+									item    = nil,
+									label   = nil,
+									temp    = tonumber(temp),
+									tpoints = tPoints,
+								},
 							},
-							tpoints = tPoints,
 						}
 					end
 				end

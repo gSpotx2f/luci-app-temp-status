@@ -53,6 +53,10 @@ return baseclass.extend({
 		return Number((mc / 1e3).toFixed(1));
 	},
 
+	sortFunc(a, b) {
+		return (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0;
+	},
+
 	load() {
 		return L.resolveDefault(this.callTempStatus(), null);
 	},
@@ -70,7 +74,7 @@ return baseclass.extend({
 		let tempArray = [];
 
 		for(let [k, v] of Object.entries(tempData)) {
-			v.sort((a, b) => (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0)
+			v.sort(this.sortFunc);
 
 			for(let i of Object.values(v)) {
 				let sensor = i.title || i.item;
@@ -78,6 +82,8 @@ return baseclass.extend({
 				if(i.sources === undefined) {
 					continue;
 				};
+
+				i.sources.sort(this.sortFunc);
 
 				for(let j of i.sources) {
 					let temp = j.temp;
@@ -91,7 +97,7 @@ return baseclass.extend({
 
 					let tempHot       = this.tempHot;
 					let tempCritical  = this.tempCritical;
-					let tpoints       = i.tpoints;
+					let tpoints       = j.tpoints;
 					let tpointsString = '';
 
 					if(tpoints) {
@@ -99,10 +105,10 @@ return baseclass.extend({
 							let t = this.formatTemp(i.temp);
 							tpointsString += `&#10;${i.type}: ${t} °C`;
 
-							if(i.type === 'critical') {
+							if(i.type === 'critical' || i.type === 'emergency') {
 								tempCritical = t;
 							}
-							else if(i.type === 'hot') {
+							else if(i.type === 'hot' || i.type === 'max') {
 								tempHot = t;
 							};
 						};
