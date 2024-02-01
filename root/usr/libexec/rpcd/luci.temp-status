@@ -38,12 +38,10 @@ local function findTPoints(thermalDirPath)
 	return next(tPoints) and tPoints or nil
 end
 
-local function getTempStatus()
-	local sensors  = {}
-	-- /sys/class/hwmon
+local function getHwmonData()
+	local hwmon    = {}
 	local hwmonDir = fs.dir(sysHwmon)
 	if hwmonDir then
-		local hwmon = {}
 		for item in hwmonDir do
 			if item:match("^hwmon[0-9]+$") then
 				local hwmonDirPath  = string.format("%s/%s", sysHwmon, item)
@@ -104,14 +102,14 @@ local function getTempStatus()
 				end
 			end
 		end
-		if #hwmon > 0 then
-			sensors["0"] = hwmon
-		end
 	end
-	-- /sys/class/thermal
+	return hwmon
+end
+
+local function getThermalData()
+	local thermal    = {}
 	local thermalDir = fs.dir(sysThermal)
 	if thermalDir then
-		local thermal = {}
 		nixio.chdir(sysThermal)
 		for item in thermalDir do
 			if item:match("^thermal_zone[0-9]+$") then
@@ -142,9 +140,21 @@ local function getTempStatus()
 				end
 			end
 		end
-		if #thermal > 0 then
-			sensors["1"] = thermal
-		end
+	end
+	return thermal
+end
+
+local function getTempStatus()
+	local sensors  = {}
+	-- /sys/class/hwmon
+	local hwmon = getHwmonData()
+	if #hwmon > 0 then
+		sensors["0"] = hwmon
+	end
+	-- /sys/class/thermal
+	local thermal = getThermalData()
+	if #thermal > 0 then
+		sensors["1"] = thermal
 	end
 	io.write(json.stringify(sensors))
 end
