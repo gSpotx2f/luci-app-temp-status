@@ -1,8 +1,8 @@
 #!/usr/bin/env lua
 
-local json  = require "luci.jsonc"
-local nixio = require "nixio"
-local fs    = require "nixio.fs"
+local json  = require("luci.jsonc")
+local nixio = require("nixio")
+local fs    = require("nixio.fs")
 
 local sysHwmon   = "/sys/class/hwmon"
 local sysThermal = "/sys/class/thermal"
@@ -19,7 +19,7 @@ local function list()
 end
 
 local function findTPoints(thermalDirPath)
-	local tPoints = {}
+	local tPoints        = {}
 	local thermalItemDir = fs.dir(thermalDirPath)
 	if thermalItemDir then
 		for tItem in thermalItemDir do
@@ -57,18 +57,18 @@ local function getHwmonData()
 					local sources = {}
 					for source in deviceDir do
 						if source:match("^temp[0-9]+_input$") then
-							local tPoints    = {}
-							local sNumber    = tonumber(source:match("[0-9]+"))
-							local temp       = readFile(string.format(
-								"%s/%s", hwmonDirPath, source))
-							local label      = readFile(string.format(
+							local tPoints        = {}
+							local sNumber        = tonumber(source:match("[0-9]+"))
+							local sourceFilePath = string.format("%s/%s", hwmonDirPath, source)
+							local temp           = readFile(sourceFilePath)
+							local label          = readFile(string.format(
 								"%s/%s", hwmonDirPath, source:gsub("_input$", "_label")))
-							local tPointEmer = readFile(string.format(
+							local tPointEmer     = readFile(string.format(
 								"%s/%s", hwmonDirPath, source:gsub("_input$", "_emergency")))
 							if tPointEmer ~= nil then
 								tPoints["0"] = { type = "emergency", temp = tPointEmer }
 							end
-							local tPointCrit = readFile(string.format(
+							local tPointCrit     = readFile(string.format(
 								"%s/%s", hwmonDirPath, source:gsub("_input$", "_crit")))
 							if tPointCrit ~= nil then
 								tPoints["1"] = { type = "critical", temp = tPointCrit }
@@ -86,6 +86,7 @@ local function getHwmonData()
 									number  = sNumber,
 									item    = source,
 									label   = label,
+									path    = sourceFilePath,
 									temp    = tonumber(temp),
 									tpoints = (next(tPoints) and tPoints or nil),
 								}
@@ -120,10 +121,11 @@ local function getThermalData()
 				local deviceDirPath  = fs.readlink(thermalDirPath)
 				if deviceDirPath and tDevPath[fs.realpath(deviceDirPath)] then
 				else
-					local number  = tonumber(item:match("[0-9]+"))
-					local temp    = readFile(string.format("%s/temp", thermalDirPath))
-					local title   = readFile(string.format("%s/type", thermalDirPath))
-					local tPoints = findTPoints(thermalDirPath)
+					local number       = tonumber(item:match("[0-9]+"))
+					local tempFilePath = string.format("%s/temp", thermalDirPath)
+					local temp         = readFile(tempFilePath)
+					local title        = readFile(string.format("%s/type", thermalDirPath))
+					local tPoints      = findTPoints(thermalDirPath)
 					if number ~= nil and temp ~= nil then
 						thermal[#thermal + 1] = {
 							number  = number,
@@ -134,6 +136,7 @@ local function getThermalData()
 									number  = 0,
 									item    = nil,
 									label   = nil,
+									path    = tempFilePath,
 									temp    = tonumber(temp),
 									tpoints = tPoints,
 								},

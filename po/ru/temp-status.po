@@ -12,11 +12,32 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "Language: ru\n"
 
+msgid "(%d minute window, %d second interval)"
+msgstr "(%d минутное окно, %d секундный интервал)"
+
+msgid "Average:"
+msgstr "Средняя:"
+
+msgid "Critical:"
+msgstr "Критическая:"
+
+msgid "Hot:"
+msgstr "Горячая:"
+
+msgid "Minimum:"
+msgstr "Минимальная:"
+
 msgid "No temperature sensors available"
 msgstr "Нет доступных датчиков температуры"
+
+msgid "Peak:"
+msgstr "Пиковая:"
 
 msgid "Sensor"
 msgstr "Датчик"
 
 msgid "Temperature"
 msgstr "Температура"
+
+msgid "This page displays the temperature sensors data."
+msgstr "На этой странице отображаются данные датчиков температуры."
