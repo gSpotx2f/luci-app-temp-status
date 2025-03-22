@@ -448,25 +448,25 @@ return view.extend({
 
 				tabs.append(E('div', { 'class': 'cbi-section', 'data-tab': tsource_path, 'data-tab-title': tsource_name }, [
 					csvg,
-					E('div', { 'class': 'right' }, E('small', { 'id': 'scale' }, '-')),
+					E('div', { 'class': 'right' }, E('small', { 'data-graph': 'scale' }, '-')),
 					E('br'),
 					E('table', { 'class': 'table', 'style': 'width:100%;table-layout:fixed' }, [
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend temp' }, _('Temperature') + ':')),
-							E('td', { 'class': 'td', 'id': 'temp_cur' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_cur' }, '0'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Minimum:'))),
-							E('td', { 'class': 'td', 'id': 'temp_min' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_min' }, '0'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Average:'))),
-							E('td', { 'class': 'td', 'id': 'temp_avg' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_avg' }, '0'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Peak:'))),
-							E('td', { 'class': 'td', 'id': 'temp_peak' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_peak' }, '0'),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend hot' }, _('Hot:'))),
-							E('td', { 'class': 'td', 'id': 'temp_hot' }, tsource_hot + ' °C'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_hot' }, tsource_hot + ' °C'),
 
 							E('td', { 'class': 'td right top' }),
 							E('td', { 'class': 'td right top' }),
@@ -477,7 +477,7 @@ return view.extend({
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend crit' }, _('Critical:'))),
-							E('td', { 'class': 'td', 'id': 'temp_crit' }, tsource_crit + ' °C'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_crit' }, tsource_crit + ' °C'),
 
 							E('td', { 'class': 'td right top' }),
 							E('td', { 'class': 'td right top' }),
@@ -504,12 +504,12 @@ return view.extend({
 						G.getElementById('label_50').firstChild.data = '%d °C'.format(info.label_50);
 						G.getElementById('label_75').firstChild.data = '%d °C'.format(info.label_75);
 
-						tab.querySelector('#scale').firstChild.data = _('(%d minute window, %d second interval)').format(info.timeframe, info.interval);
+						tab.querySelector('[data-graph="scale"]').firstChild.data = _('(%d minute window, %d second interval)').format(info.timeframe, info.interval);
 
-						dom.content(tab.querySelector('#temp_cur'), '%.1f °C'.format(info.line_current[0], true));
-						dom.content(tab.querySelector('#temp_min'), '%.1f °C'.format(info.line_min[0], true));
-						dom.content(tab.querySelector('#temp_avg'), '%.1f °C'.format(info.line_average[0], true));
-						dom.content(tab.querySelector('#temp_peak'), '%.1f °C'.format(info.line_peak[0], true));
+						dom.content(tab.querySelector('[data-graph="temp_cur"]'), '%.1f °C'.format(info.line_current[0], true));
+						dom.content(tab.querySelector('[data-graph="temp_min"]'), '%.1f °C'.format(info.line_min[0], true));
+						dom.content(tab.querySelector('[data-graph="temp_avg"]'), '%.1f °C'.format(info.line_average[0], true));
+						dom.content(tab.querySelector('[data-graph="temp_peak"]'), '%.1f °C'.format(info.line_peak[0], true));
 					}
 				);
 			}
