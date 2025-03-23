@@ -21,4 +21,3 @@ i18n-ru:
 ## Screenshots:
 
 ![](https://github.com/gSpotx2f/luci-app-temp-status/blob/master/screenshots/01.jpg)
-![](https://github.com/gSpotx2f/luci-app-temp-status/blob/master/screenshots/02.jpg)
