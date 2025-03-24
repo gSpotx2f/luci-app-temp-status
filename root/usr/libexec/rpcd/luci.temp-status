@@ -61,27 +61,27 @@ local function getHwmonData()
 							local sNumber        = tonumber(source:match("[0-9]+"))
 							local sourceFilePath = string.format("%s/%s", hwmonDirPath, source)
 							local temp           = readFile(sourceFilePath)
-							local label          = readFile(string.format(
-								"%s/%s", hwmonDirPath, source:gsub("_input$", "_label")))
-							local tPointEmer     = readFile(string.format(
-								"%s/%s", hwmonDirPath, source:gsub("_input$", "_emergency")))
-							if tPointEmer ~= nil then
-								tPoints["0"] = { type = "emergency", temp = tPointEmer }
-							end
-							local tPointCrit     = readFile(string.format(
-								"%s/%s", hwmonDirPath, source:gsub("_input$", "_crit")))
-							if tPointCrit ~= nil then
-								tPoints["1"] = { type = "critical", temp = tPointCrit }
-							end
-							local tPointMax  = readFile(string.format(
-								"%s/%s", hwmonDirPath, source:gsub("_input$", "_max")))
-							if tPointMax ~= nil then
-								tPoints["2"] = { type = "max", temp = tPointMax }
-							end
-							if deviceDirPath and (not tPoints or not next(tPoints)) then
-								tPoints = findTPoints(deviceDirPath) or tPoints
-							end
 							if sNumber ~= nil and temp ~= nil then
+								local label          = readFile(string.format(
+									"%s/%s", hwmonDirPath, source:gsub("_input$", "_label")))
+								local tPointEmer     = readFile(string.format(
+									"%s/%s", hwmonDirPath, source:gsub("_input$", "_emergency")))
+								if tPointEmer ~= nil then
+									tPoints["0"] = { type = "emergency", temp = tPointEmer }
+								end
+								local tPointCrit     = readFile(string.format(
+									"%s/%s", hwmonDirPath, source:gsub("_input$", "_crit")))
+								if tPointCrit ~= nil then
+									tPoints["1"] = { type = "critical", temp = tPointCrit }
+								end
+								local tPointMax  = readFile(string.format(
+									"%s/%s", hwmonDirPath, source:gsub("_input$", "_max")))
+								if tPointMax ~= nil then
+									tPoints["2"] = { type = "max", temp = tPointMax }
+								end
+								if deviceDirPath and (not tPoints or not next(tPoints)) then
+									tPoints = findTPoints(deviceDirPath) or tPoints
+								end
 								sources[#sources + 1] = {
 									number  = sNumber,
 									item    = source,
@@ -93,15 +93,13 @@ local function getHwmonData()
 							end
 						end
 					end
-					if dNumber ~= nil then
-						if #sources > 0 then
-							hwmon[#hwmon + 1] = {
-								number  = dNumber,
-								item    = item,
-								title   = title,
-								sources = sources,
-							}
-						end
+					if dNumber ~= nil and #sources > 0 then
+						hwmon[#hwmon + 1] = {
+							number  = dNumber,
+							item    = item,
+							title   = title,
+							sources = sources,
+						}
 					end
 				end
 			end
@@ -124,9 +122,9 @@ local function getThermalData()
 					local number       = tonumber(item:match("[0-9]+"))
 					local tempFilePath = string.format("%s/temp", thermalDirPath)
 					local temp         = readFile(tempFilePath)
-					local title        = readFile(string.format("%s/type", thermalDirPath))
-					local tPoints      = findTPoints(thermalDirPath)
 					if number ~= nil and temp ~= nil then
+						local title   = readFile(string.format("%s/type", thermalDirPath))
+						local tPoints = findTPoints(thermalDirPath)
 						thermal[#thermal + 1] = {
 							number  = number,
 							item    = item,
