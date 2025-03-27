@@ -178,8 +178,8 @@ return view.extend({
 		let time_interval     = 60;
 		let time_interval_min = time_interval / 60
 		let step              = base_step * this.pollInterval;
-		let mult              = base_step * time_interval / step;
-		let data_wanted       = Math.floor(width / step);
+		let data_wanted       = Math.ceil(width / step);
+		let timeline_offset   = width % step;
 		let data_values       = [];
 		let line_elements     = [];
 
@@ -206,25 +206,26 @@ return view.extend({
 		};
 
 		/* plot horizontal time interval lines */
-		for(let i = width % (step * mult); i < width; i += step * mult) {
+		for(let i = width % (base_step * time_interval); i < width; i += base_step * time_interval) {
+			let x    = i - (timeline_offset);
 			let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-				line.setAttribute('x1', i);
+				line.setAttribute('x1', x);
 				line.setAttribute('y1', 0);
-				line.setAttribute('x2', i);
+				line.setAttribute('x2', x);
 				line.setAttribute('y2', '100%');
 				line.setAttribute('class', 'grid');
 
 			let text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-				text.setAttribute('x', i + 5);
+				text.setAttribute('x', x + 5);
 				text.setAttribute('y', 15);
-				text.append(document.createTextNode(String((width - i) / step / mult * time_interval_min ) + 'm'));
+				text.append(document.createTextNode(String((width - i) / base_step / time_interval) + 'm'));
 
 			G.append(line);
 			G.append(text);
 		};
 
 		info.interval  = this.pollInterval;
-		info.timeframe = Math.floor(data_wanted / mult * time_interval_min);
+		info.timeframe = Math.floor(data_wanted / time_interval * this.pollInterval);
 
 		this.graphPolls.push({
 			tpath,
@@ -236,9 +237,10 @@ return view.extend({
 			width,
 			height,
 			step,
-			values   : data_values,
-			timestamp: 0,
-			fill     : 1,
+			data_wanted,
+			values     : data_values,
+			timestamp  : 0,
+			fill       : 1,
 		});
 	},
 
@@ -266,7 +268,7 @@ return view.extend({
 					let temp_hot       = datasets[ctx.tpath].temp_hot;
 					let temp_crit      = datasets[ctx.tpath].temp_critical;
 					let data_scale     = 0;
-					let data_wanted    = Math.floor(ctx.width / ctx.step);
+					let data_wanted    = ctx.data_wanted;
 					let last_timestamp = NaN;
 
 					for(let i = 0, di = 0; di < lines.length; di++) {
@@ -291,7 +293,7 @@ return view.extend({
 						};
 
 						i++;
-					}
+					};
 
 					/* cut off outdated entries */
 					ctx.fill = Math.min(ctx.fill, data_wanted);
@@ -453,16 +455,16 @@ return view.extend({
 					E('table', { 'class': 'table', 'style': 'width:100%;table-layout:fixed' }, [
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend temp' }, _('Temperature') + ':')),
-							E('td', { 'class': 'td', 'data-graph': 'temp_cur' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_cur' }, '-'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Minimum:'))),
-							E('td', { 'class': 'td', 'data-graph': 'temp_min' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_min' }, '-'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Average:'))),
-							E('td', { 'class': 'td', 'data-graph': 'temp_avg' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_avg' }, '-'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Peak:'))),
-							E('td', { 'class': 'td', 'data-graph': 'temp_peak' }, '0'),
+							E('td', { 'class': 'td', 'data-graph': 'temp_peak' }, '-'),
 						]),
 						E('tr', { 'class': 'tr' }, [
 							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend hot' }, _('Hot:'))),
@@ -512,7 +514,7 @@ return view.extend({
 						dom.content(tab.querySelector('[data-graph="temp_peak"]'), '%.1f °C'.format(info.line_peak[0], true));
 					}
 				);
-			}
+			};
 
 			ui.tabs.initTabGroup(tabs.childNodes);
 			this.pollData();
