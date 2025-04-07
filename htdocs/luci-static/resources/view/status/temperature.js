@@ -310,7 +310,9 @@ return view.extend({
 						let nonempty = 0;
 						for(let j = 0; j < values[i].length; j++) {
 							info.line_peak[i] = isNaN(info.line_peak[i]) ? values[i][j] : Math.max(info.line_peak[i], values[i][j]);
+							info.line_peak[i] = Number(info.line_peak[i].toFixed(1));
 							info.line_min[i]  = isNaN(info.line_min[i]) ? values[i][j] : Math.min(info.line_min[i], values[i][j]);
+							info.line_min[i]  = Number(info.line_min[i].toFixed(1));
 
 							if(!isNaN(values[i][j])) {
 								nonempty++;
@@ -319,6 +321,7 @@ return view.extend({
 						};
 
 						info.line_average[i] = info.line_average[i] / nonempty;
+						info.line_average[i] = Number(info.line_average[i].toFixed(1));
 					};
 
 					info.peak = Math.max.apply(Math, info.line_peak);
@@ -508,10 +511,10 @@ return view.extend({
 
 						tab.querySelector('[data-graph="scale"]').firstChild.data = _('(%d minute window, %d second interval)').format(info.timeframe, info.interval);
 
-						dom.content(tab.querySelector('[data-graph="temp_cur"]'), '%.1f °C'.format(info.line_current[0], true));
-						dom.content(tab.querySelector('[data-graph="temp_min"]'), '%.1f °C'.format(info.line_min[0], true));
-						dom.content(tab.querySelector('[data-graph="temp_avg"]'), '%.1f °C'.format(info.line_average[0], true));
-						dom.content(tab.querySelector('[data-graph="temp_peak"]'), '%.1f °C'.format(info.line_peak[0], true));
+						dom.content(tab.querySelector('[data-graph="temp_cur"]'), info.line_current[0] + ' °C');
+						dom.content(tab.querySelector('[data-graph="temp_min"]'), info.line_min[0] + ' °C');
+						dom.content(tab.querySelector('[data-graph="temp_avg"]'), info.line_average[0] + ' °C');
+						dom.content(tab.querySelector('[data-graph="temp_peak"]'), info.line_peak[0] + ' °C');
 					}
 				);
 			};
