@@ -21,6 +21,9 @@ msgstr "Средняя:"
 msgid "Critical:"
 msgstr "Критическая:"
 
+msgid "Hide"
+msgstr "Скрыть"
+
 msgid "Hot:"
 msgstr "Горячая:"
 
@@ -35,6 +38,9 @@ msgstr "Пиковая:"
 
 msgid "Sensor"
 msgstr "Датчик"
+
+msgid "Show hidden sensors"
+msgstr "Показать скрытые датчики"
 
 msgid "Temperature"
 msgstr "Температура"

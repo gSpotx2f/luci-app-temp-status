@@ -10,6 +10,9 @@ msgstr ""
 msgid "Critical:"
 msgstr ""
 
+msgid "Hide"
+msgstr ""
+
 msgid "Hot:"
 msgstr ""
 
@@ -23,6 +26,9 @@ msgid "Peak:"
 msgstr ""
 
 msgid "Sensor"
+msgstr ""
+
+msgid "Show hidden sensors"
 msgstr ""
 
 msgid "Temperature"

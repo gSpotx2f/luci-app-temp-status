@@ -34,14 +34,46 @@ document.head.append(E('style', {'type': 'text/css'},
 .temp-status-crit td {
 	color: var(--app-temp-status-font-color) !important;
 }
+.temp-status-unhide-all {
+	display: inline-block;
+	cursor: pointer;
+	margin: 2px !important;
+	padding: 2px 4px;
+	border: 1px dotted;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	opacity: 0.7;
+}
+.temp-status-unhide-all:hover {
+	opacity: 0.9;
+}
+.temp-status-hide-item {
+	display: inline-block;
+	cursor: pointer;
+	margin: 0 0.5em 0 0 !important;
+	padding: 0 4px;
+	border: 1px dotted;
+	-webkit-border-radius: 4px;
+	-moz-border-radius: 4px;
+	border-radius: 4px;
+	opacity: 0.7;
+}
+.temp-status-hide-item:hover {
+	opacity: 1.0;
+}
 `));
 
 return baseclass.extend({
-	title       : _('Temperature'),
+	title         : _('Temperature'),
 
-	tempHot     : 95,
+	viewName      : 'temp_status',
 
-	tempCritical: 105,
+	tempHot       : 95,
+
+	tempCritical  : 105,
+
+	hiddenItems   : new Set(),
 
 	callTempStatus: rpc.declare({
 		object: 'luci.temp-status',
@@ -50,15 +82,45 @@ return baseclass.extend({
 	}),
 
 	formatTemp(mc) {
-		return Number((mc / 1e3).toFixed(1));
+		return Number((mc / 1000).toFixed(1));
 	},
 
 	sortFunc(a, b) {
 		return (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0;
 	},
 
+	restoreSettingsFromLocalStorage() {
+		let hiddenItems = localStorage.getItem(`luci-app-${this.viewName}-hiddenItems`);
+		if(hiddenItems) {
+			this.hiddenItems = new Set(hiddenItems.split(','));
+		};
+	},
+
+	saveSettingsToLocalStorage() {
+		localStorage.setItem(
+			`luci-app-${this.viewName}-hiddenItems`, Array.from(this.hiddenItems).join(','));
+	},
+
 	load() {
+		this.restoreSettingsFromLocalStorage();
 		return L.resolveDefault(this.callTempStatus(), null);
+	},
+
+	hideItem(path) {
+		let itemRow = document.querySelector(`[data-path="${path}"]`);
+		if(itemRow) {
+			itemRow.style.display = 'none';
+			this.hiddenItems.add(path);
+			this.saveSettingsToLocalStorage();
+			document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
+		};
+	},
+
+	unhideAllItems() {
+		this.hiddenItems.clear();
+		this.saveSettingsToLocalStorage();
+		document.querySelectorAll(`[data-path]`).forEach(e => e.style.display = 'table-row');
+		document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
 	},
 
 	render(tempData) {
@@ -115,17 +177,29 @@ return baseclass.extend({
 
 					let rowStyle = (temp >= tempCritical) ? ' temp-status-crit':
 						(temp >= tempHot) ? ' temp-status-hot' : '';
+					let display  = this.hiddenItems.has(j.path) ? 'none' : 'table-row';
 
 					tempTable.append(
-						E('tr', { 'class': 'tr' + rowStyle }, [
+						E('tr', {
+							'class'    : 'tr' + rowStyle,
+							'data-path': j.path ,
+							'style'    : `display:${display}`,
+						}, [
 							E('td', {
 									'class'     : 'td left',
 									'data-title': _('Sensor')
-								},
-								(tpointsString.length > 0) ?
-								`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
-								name
-							),
+								}, [
+								E('span', {
+									'class': 'temp-status-hide-item',
+									'title': _('Hide'),
+									'click': () => this.hideItem(j.path),
+								}, '&#935;'),
+								E('span', {},
+									(tpointsString.length > 0) ?
+									`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
+									name
+								),
+							]),
 							E('td', {
 									'class'     : 'td left',
 									'data-title': _('Temperature')
@@ -146,6 +220,22 @@ return baseclass.extend({
 				)
 			);
 		};
-		return tempTable;
+
+		return E('div', { 'class': 'cbi-section' }, [
+			E('div',
+				{ 'style': 'margin-bottom:1em; padding:0 4px;' },
+				E('span', {
+					'class': 'temp-status-unhide-all',
+					'href' : 'javascript:void(0)',
+					'click': () => this.unhideAllItems(),
+				}, [
+					_('Show hidden sensors'),
+					' (',
+					E('span', { 'id': 'temp-status-hnum' }, this.hiddenItems.size),
+					')',
+				])
+			),
+			tempTable,
+		]);
 	},
 });
