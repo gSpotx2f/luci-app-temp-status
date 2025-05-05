@@ -7,16 +7,16 @@ OpenWrt >= 21.02.
 
 ## Installation notes
 
-    wget --no-check-certificate -O /tmp/luci-app-temp-status_0.5.5-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-app-temp-status_0.5.5-r1_all.ipk
-    opkg install /tmp/luci-app-temp-status_0.5.5-r1_all.ipk
-    rm /tmp/luci-app-temp-status_0.5.5-r1_all.ipk
+    wget --no-check-certificate -O /tmp/luci-app-temp-status_0.5.6-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-app-temp-status_0.5.6-r1_all.ipk
+    opkg install /tmp/luci-app-temp-status_0.5.6-r1_all.ipk
+    rm /tmp/luci-app-temp-status_0.5.6-r1_all.ipk
     /etc/init.d/rpcd reload
 
 i18n-ru:
 
-    wget --no-check-certificate -O /tmp/luci-i18n-temp-status-ru_0.5.5-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-i18n-temp-status-ru_0.5.5-r1_all.ipk
-    opkg install /tmp/luci-i18n-temp-status-ru_0.5.5-r1_all.ipk
-    rm /tmp/luci-i18n-temp-status-ru_0.5.5-r1_all.ipk
+    wget --no-check-certificate -O /tmp/luci-i18n-temp-status-ru_0.5.6-r1_all.ipk https://github.com/gSpotx2f/packages-openwrt/raw/master/current/luci-i18n-temp-status-ru_0.5.6-r1_all.ipk
+    opkg install /tmp/luci-i18n-temp-status-ru_0.5.6-r1_all.ipk
+    rm /tmp/luci-i18n-temp-status-ru_0.5.6-r1_all.ipk
 
 ## Screenshots:
 

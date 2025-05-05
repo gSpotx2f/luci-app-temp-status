@@ -73,7 +73,11 @@ return baseclass.extend({
 
 	tempCritical  : 105,
 
+	tempData      : {},
+
 	hiddenItems   : new Set(),
+
+	tempTable     : E('table', { 'class': 'table' }),
 
 	callTempStatus: rpc.declare({
 		object: 'luci.temp-status',
@@ -101,41 +105,16 @@ return baseclass.extend({
 			`luci-app-${this.viewName}-hiddenItems`, Array.from(this.hiddenItems).join(','));
 	},
 
-	load() {
-		this.restoreSettingsFromLocalStorage();
-		return L.resolveDefault(this.callTempStatus(), null);
-	},
-
-	hideItem(path) {
-		let itemRow = document.querySelector(`[data-path="${path}"]`);
-		if(itemRow) {
-			itemRow.style.display = 'none';
-			this.hiddenItems.add(path);
-			this.saveSettingsToLocalStorage();
-			document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
-		};
-	},
-
-	unhideAllItems() {
-		this.hiddenItems.clear();
-		this.saveSettingsToLocalStorage();
-		document.querySelectorAll(`[data-path]`).forEach(e => e.style.display = 'table-row');
-		document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
-	},
-
-	render(tempData) {
-		if(!tempData) {
-			return;
-		};
-
-		let tempTable = E('table', { 'class': 'table' },
+	makeTempTableContent() {
+		this.tempTable.innerHTML = '';
+		this.tempTable.append(
 			E('tr', { 'class': 'tr table-titles' }, [
 				E('th', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
 				E('th', { 'class': 'th left' }, _('Temperature')),
 			])
 		);
 
-		for(let [k, v] of Object.entries(tempData)) {
+		for(let [k, v] of Object.entries(this.tempData)) {
 			v.sort(this.sortFunc);
 
 			for(let i of Object.values(v)) {
@@ -148,6 +127,10 @@ return baseclass.extend({
 				i.sources.sort(this.sortFunc);
 
 				for(let j of i.sources) {
+					if(this.hiddenItems.has(j.path)) {
+						continue;
+					};
+
 					let temp = j.temp;
 					let name = (j.label !== undefined) ? sensor + " / " + j.label :
 						(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
@@ -177,13 +160,11 @@ return baseclass.extend({
 
 					let rowStyle = (temp >= tempCritical) ? ' temp-status-crit':
 						(temp >= tempHot) ? ' temp-status-hot' : '';
-					let display  = this.hiddenItems.has(j.path) ? 'none' : 'table-row';
 
-					tempTable.append(
+					this.tempTable.append(
 						E('tr', {
 							'class'    : 'tr' + rowStyle,
 							'data-path': j.path ,
-							'style'    : `display:${display}`,
 						}, [
 							E('td', {
 									'class'     : 'td left',
@@ -211,8 +192,8 @@ return baseclass.extend({
 			};
 		};
 
-		if(tempTable.childNodes.length === 1) {
-			tempTable.append(
+		if(this.tempTable.childNodes.length === 1) {
+			this.tempTable.append(
 				E('tr', { 'class': 'tr placeholder' },
 					E('td', { 'class': 'td' },
 						E('em', {}, _('No temperature sensors available'))
@@ -220,6 +201,34 @@ return baseclass.extend({
 				)
 			);
 		};
+	},
+
+	hideItem(path) {
+		this.hiddenItems.add(path);
+		this.saveSettingsToLocalStorage();
+		this.makeTempTableContent();
+		document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
+	},
+
+	unhideAllItems() {
+		this.hiddenItems.clear();
+		this.saveSettingsToLocalStorage();
+		this.makeTempTableContent();
+		document.getElementById('temp-status-hnum').textContent = this.hiddenItems.size;
+	},
+
+	load() {
+		this.restoreSettingsFromLocalStorage();
+		return L.resolveDefault(this.callTempStatus(), null);
+	},
+
+	render(tempData) {
+		if(!tempData) {
+			return;
+		};
+
+		this.tempData = tempData;
+		this.makeTempTableContent();
 
 		return E('div', { 'class': 'cbi-section' }, [
 			E('div',
@@ -235,7 +244,7 @@ return baseclass.extend({
 					')',
 				])
 			),
-			tempTable,
+			this.tempTable,
 		]);
 	},
 });
