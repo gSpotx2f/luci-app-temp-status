@@ -111,6 +111,7 @@ return baseclass.extend({
 			E('tr', { 'class': 'tr table-titles' }, [
 				E('th', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
 				E('th', { 'class': 'th left' }, _('Temperature')),
+				E('th', { 'class': 'th right', 'width': '1%' }, ' '),
 			])
 		);
 
@@ -149,10 +150,10 @@ return baseclass.extend({
 							let t = this.formatTemp(i.temp);
 							tpointsString += `&#10;${i.type}: ${t} °C`;
 
-							if(i.type === 'critical' || i.type === 'emergency') {
+							if(i.type == 'critical' || i.type == 'emergency') {
 								tempCritical = t;
 							}
-							else if(i.type === 'hot' || i.type === 'max') {
+							else if(i.type == 'hot' || i.type == 'max') {
 								tempHot = t;
 							};
 						};
@@ -169,23 +170,28 @@ return baseclass.extend({
 							E('td', {
 									'class'     : 'td left',
 									'data-title': _('Sensor')
-								}, [
+								},
+								(tpointsString.length > 0) ?
+								`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
+								name
+							),
+							E('td', {
+									'class'     : 'td left',
+									'data-title': _('Temperature')
+								},
+								(temp === undefined) ? '-' : temp + ' °C'
+							),
+							E('td', {
+									'class'     : 'td right',
+									'data-title': _('Hide'),
+									'title'     : _('Hide'),
+								},
 								E('span', {
 									'class': 'temp-status-hide-item',
 									'title': _('Hide'),
 									'click': () => this.hideItem(j.path),
 								}, '&#935;'),
-								E('span', {},
-									(tpointsString.length > 0) ?
-									`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
-									name
-								),
-							]),
-							E('td', {
-									'class'     : 'td left',
-									'data-title': _('Temperature')
-								},
-								(temp === undefined) ? '-' : temp + ' °C'),
+							),
 						])
 					);
 				};
