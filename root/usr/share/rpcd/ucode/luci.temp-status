@@ -1,0 +1,175 @@
+
+'use strict';
+
+import { chdir, lsdir, readfile, readlink, realpath, stat } from 'fs';
+
+const sysHwmon   = '/sys/class/hwmon';
+const sysThermal = '/sys/class/thermal';
+
+const tDevPath   = {};
+
+function readFile(path) {
+	let r = readfile(path);
+	return r && trim(r);
+}
+
+function findTPoints(thermalDirPath) {
+	let tPoints = {};
+	if(stat(thermalDirPath)?.type == 'directory') {
+		for(let tItem in lsdir(thermalDirPath)) {
+			if(match(tItem, /^trip_point_[0-9]+_type$/)) {
+				let pTypePath = sprintf('%s/%s', thermalDirPath, tItem);
+				let m         = match(tItem, /[0-9]+/);
+				let pNumber   = m && m[0];
+				let pType     = readFile(pTypePath);
+				let pTemp     = readFile(replace(pTypePath, /_type$/, '_temp'));
+				if(pNumber && pType && pTemp) {
+					tPoints[pNumber] = { type: pType, temp: int(pTemp) };
+				}
+			}
+		}
+	}
+	return (length(tPoints) > 0) ? tPoints : null;
+}
+
+function getHwmonData() {
+	let hwmon = [];
+	if(stat(sysHwmon)?.type == 'directory') {
+		for(let item in lsdir(sysHwmon)) {
+			if(match(item, /^hwmon[0-9]+$/)) {
+				let hwmonDirPath  = sprintf('%s/%s', sysHwmon, item);
+				let deviceDirPath = readlink(sprintf('%s/device', hwmonDirPath));
+				if(deviceDirPath) {
+					chdir(hwmonDirPath);
+					let path = realpath(deviceDirPath);
+					if(path) {
+						tDevPath[path] = true;
+					}
+				}
+				if(stat(hwmonDirPath)?.type == 'directory') {
+					let m       = match(item, /[0-9]+/);
+					let dNumber = m && m[0];
+					let title   = readFile(hwmonDirPath + '/name');
+					let sources = [];
+					for(let source in lsdir(hwmonDirPath)) {
+						if(match(source, /^temp[0-9]+_input$/)) {
+							let tPoints        = {};
+							let m              = match(source, /[0-9]+/);
+							let sNumber        = m && m[0];
+							let sourceFilePath = sprintf('%s/%s', hwmonDirPath, source);
+							let temp           = readFile(sourceFilePath);
+							if(sNumber && temp) {
+								let label = readFile(sprintf(
+									"%s/%s", hwmonDirPath, replace(source, /_input$/, '_label')));
+								let tPointEmer = readFile(sprintf(
+									"%s/%s", hwmonDirPath, replace(source, /_input$/, '_emergency')));
+								if(tPointEmer) {
+									tPoints['0'] = { type: 'emergency', temp: int(tPointEmer) };
+								}
+								let tPointCrit = readFile(sprintf(
+									"%s/%s", hwmonDirPath, replace(source, /_input$/, '_crit')));
+								if(tPointCrit) {
+									tPoints['1'] = { type: 'critical', temp: int(tPointCrit) };
+								}
+								let tPointMax = readFile(sprintf(
+									"%s/%s", hwmonDirPath, replace(source, /_input$/, '_max')));
+								if(tPointMax) {
+									tPoints['2'] = { type: 'max', temp: int(tPointMax) };
+								}
+								if(deviceDirPath && (!tPoints || length(tPoints) == 0)) {
+									tPoints = findTPoints(deviceDirPath) || tPoints;
+								}
+								let sDict = {
+									number: int(sNumber),
+									item  : source,
+									path  : sourceFilePath,
+									temp  : int(temp),
+								};
+								if(label) {
+									sDict['label'] = label;
+								};
+								if(length(tPoints) > 0) {
+									sDict['tpoints'] = tPoints;
+								}
+								push(sources, sDict);
+							}
+						}
+					}
+					if(dNumber && length(sources) > 0) {
+						let d = {
+							number : int(dNumber),
+							item   : item,
+							sources: sources,
+						};
+						if(title) {
+							d['title'] = title;
+						}
+						push(hwmon, d);
+					}
+				}
+			}
+		}
+	}
+	return hwmon;
+}
+
+function getThermalData() {
+	let thermal = [];
+	if(stat(sysThermal)?.type == 'directory') {
+		chdir(sysThermal);
+		for(let item in lsdir(sysThermal)) {
+			if(match(item, /^thermal_zone[0-9]+$/)) {
+				let thermalDirPath = sprintf('%s/%s', sysThermal, item);
+				let deviceDirPath  = readlink(thermalDirPath);
+				if(deviceDirPath && exists(tDevPath, realpath(deviceDirPath))) {
+					continue;
+				}
+				let m            = match(item, /[0-9]+/);
+				let number       = m && m[0];
+				let tempFilePath = thermalDirPath + '/temp';
+				let temp         = readFile(tempFilePath);
+				if(number && temp) {
+					let title   = readFile(thermalDirPath + '/type');
+					let tPoints = findTPoints(thermalDirPath);
+					let sDict = {
+						number: 0,
+						path  : tempFilePath,
+						temp  : int(temp),
+					};
+					if(length(tPoints) > 0) {
+						sDict['tpoints'] = tPoints;
+					}
+					let tDict = {
+						number : int(number),
+						item   : item,
+						sources: [ sDict ],
+					};
+					if(title) {
+						tDict['title'] = title;
+					}
+					push(thermal, tDict);
+				}
+			}
+		}
+	}
+	return thermal;
+}
+
+const methods = {
+	getTempStatus: {
+		call: function() {
+			let sensors = {};
+			let hwmon = getHwmonData();
+			if(length(hwmon) > 0) {
+				sensors['0'] = hwmon;
+			}
+			let thermal = getThermalData();
+			if(length(thermal) > 0) {
+				sensors['1'] = thermal;
+			}
+			return sensors;
+		},
+	},
+};
+
+return { 'luci.temp-status': methods };
