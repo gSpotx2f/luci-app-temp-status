@@ -6,8 +6,6 @@ import { chdir, lsdir, readfile, readlink, realpath, stat } from 'fs';
 const sysHwmon   = '/sys/class/hwmon';
 const sysThermal = '/sys/class/thermal';
 
-const tDevPath   = {};
-
 function readFile(path) {
 	let r = readfile(path);
 	return r && trim(r);
@@ -32,7 +30,7 @@ function findTPoints(thermalDirPath) {
 	return (length(tPoints) > 0) ? tPoints : null;
 }
 
-function getHwmonData() {
+function getHwmonData(tDevPath, tempData) {
 	let hwmon = [];
 	if(stat(sysHwmon)?.type == 'directory') {
 		for(let item in lsdir(sysHwmon)) {
@@ -59,6 +57,7 @@ function getHwmonData() {
 							let sourceFilePath = sprintf('%s/%s', hwmonDirPath, source);
 							let temp           = readFile(sourceFilePath);
 							if(sNumber && temp) {
+								tempData[sourceFilePath] = int(temp);
 								let label = readFile(sprintf(
 									"%s/%s", hwmonDirPath, replace(source, /_input$/, '_label')));
 								let tPointEmer = readFile(sprintf(
@@ -77,7 +76,7 @@ function getHwmonData() {
 									tPoints['2'] = { type: 'max', temp: int(tPointMax) };
 								}
 								if(deviceDirPath && (!tPoints || length(tPoints) == 0)) {
-									tPoints = findTPoints(deviceDirPath) || tPoints;
+									tPoints = (findTPoints(deviceDirPath) || tPoints);
 								}
 								let sDict = {
 									number: int(sNumber),
@@ -113,7 +112,7 @@ function getHwmonData() {
 	return hwmon;
 }
 
-function getThermalData() {
+function getThermalData(tDevPath, tempData) {
 	let thermal = [];
 	if(stat(sysThermal)?.type == 'directory') {
 		chdir(sysThermal);
@@ -129,6 +128,7 @@ function getThermalData() {
 				let tempFilePath = thermalDirPath + '/temp';
 				let temp         = readFile(tempFilePath);
 				if(number && temp) {
+					tempData[tempFilePath] = int(temp);
 					let title   = readFile(thermalDirPath + '/type');
 					let tPoints = findTPoints(thermalDirPath);
 					let sDict = {
@@ -155,21 +155,48 @@ function getThermalData() {
 	return thermal;
 }
 
+function getSensors() {
+	const tDevPath = {};
+	const tempData = {};
+	let sensors    = {};
+	let hwmon      = getHwmonData(tDevPath, tempData);
+	if(length(hwmon) > 0) {
+		sensors['0'] = hwmon;
+	}
+	let thermal = getThermalData(tDevPath, tempData);
+	if(length(thermal) > 0) {
+		sensors['1'] = thermal;
+	}
+	return { sensors: sensors, temp: tempData };
+}
+
 const methods = {
-	getTempStatus: {
-		call: function() {
-			let sensors = {};
-			let hwmon = getHwmonData();
-			if(length(hwmon) > 0) {
-				sensors['0'] = hwmon;
-			}
-			let thermal = getThermalData();
-			if(length(thermal) > 0) {
-				sensors['1'] = thermal;
-			}
-			return sensors;
-		},
+	getSensors: {
+		call: getSensors
 	},
+
+	getTempData: {
+		args: { tpaths: [] },
+		call: function(request) {
+			const tpaths = request.args?.tpaths;
+			let tData    = {};
+			if(tpaths && length(tpaths) > 0) {
+				for(let i in tpaths) {
+					let t    = readFile(i);
+					tData[i] = (t && int(t));
+				}
+			}
+			return { temp: tData };
+		}
+	},
+
+	/*
+	 * For compatibility with <= v0.6.
+	 * Will be removed in the future.
+	 */
+	getTempStatus: {
+		call: function() { return getSensors().sensors }
+	}
 };
 
 return { 'luci.temp-status': methods };

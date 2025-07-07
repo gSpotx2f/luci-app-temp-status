@@ -73,16 +73,27 @@ return baseclass.extend({
 
 	tempCritical  : 105,
 
-	tempData      : {},
+	sensorsData   : null,
+
+	tempData      : null,
+
+	sensorsPath   : [],
 
 	hiddenItems   : new Set(),
 
 	tempTable     : E('table', { 'class': 'table' }),
 
-	callTempStatus: rpc.declare({
+	callSensors: rpc.declare({
 		object: 'luci.temp-status',
-		method: 'getTempStatus',
-		expect: { '': {} }
+		method: 'getSensors',
+		expect: { '': {} },
+	}),
+
+	callTempData: rpc.declare({
+		object: 'luci.temp-status',
+		method: 'getTempData',
+		params: [ 'tpaths' ],
+		expect: { '': {} },
 	}),
 
 	formatTemp(mc) {
@@ -115,7 +126,7 @@ return baseclass.extend({
 			])
 		);
 
-		for(let [k, v] of Object.entries(this.tempData)) {
+		for(let [k, v] of Object.entries(this.sensorsData)) {
 			v.sort(this.sortFunc);
 
 			for(let i of Object.values(v)) {
@@ -132,11 +143,11 @@ return baseclass.extend({
 						continue;
 					};
 
-					let temp = j.temp;
+					let temp = this.tempData[j.path];
 					let name = (j.label !== undefined) ? sensor + " / " + j.label :
 						(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
 
-					if(temp !== undefined) {
+					if(temp !== undefined && temp !== null) {
 						temp = this.formatTemp(temp);
 					};
 
@@ -179,7 +190,7 @@ return baseclass.extend({
 									'class'     : 'td left',
 									'data-title': _('Temperature')
 								},
-								(temp === undefined) ? '-' : temp + ' °C'
+								(temp === undefined || temp === null) ? '-' : temp + ' °C'
 							),
 							E('td', {
 									'class'     : 'td right',
@@ -225,15 +236,28 @@ return baseclass.extend({
 
 	load() {
 		this.restoreSettingsFromLocalStorage();
-		return L.resolveDefault(this.callTempStatus(), null);
+		if(this.sensorsData) {
+			return L.resolveDefault(this.callTempData(this.sensorsPath), null);
+		} else {
+			return L.resolveDefault(this.callSensors(), null);
+		};
 	},
 
-	render(tempData) {
-		if(!tempData) {
+	render(data) {
+		if(!data) {
 			return;
 		};
 
-		this.tempData = tempData;
+		if(!this.sensorsData) {
+			this.sensorsData = data.sensors;
+			this.sensorsPath = new Array(...Object.keys(data.temp));
+		};
+		this.tempData = data.temp;
+
+		if(!this.sensorsData || !this.tempData) {
+			return;
+		};
+
 		this.makeTempTableContent();
 
 		return E('div', { 'class': 'cbi-section' }, [

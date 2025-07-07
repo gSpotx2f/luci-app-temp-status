@@ -74,76 +74,109 @@ return view.extend({
 
 	tempBufferSize: 4,
 
+	sensorsData   : null,
+
+	sensorsPath   : [],
+
 	tempSources   : {},
 
 	graphPolls    : [],
 
-	callTempStatus: rpc.declare({
+	callSensors: rpc.declare({
 		object: 'luci.temp-status',
-		method: 'getTempStatus',
-		expect: { '': {} }
+		method: 'getSensors',
+		expect: { '': {} },
+	}),
+
+	callTempData: rpc.declare({
+		object: 'luci.temp-status',
+		method: 'getTempData',
+		params: [ 'tpaths' ],
+		expect: { '': {} },
 	}),
 
 	formatTemp(mc) {
-		return Number((mc / 1e3).toFixed(1));
+		return Number((mc / 1000).toFixed(1));
 	},
 
 	sortFunc(a, b) {
 		return (a.number > b.number) ? 1 : (a.number < b.number) ? -1 : 0;
 	},
 
-	getTempData(temp_data) {
-		return this.callTempStatus().then(temp_data => {
-			if(temp_data) {
-				for(let e of Object.values(temp_data)) {
-					e.sort(this.sortFunc);
+	getSensorsData() {
+		return this.callSensors().then(data => {
+			if(data) {
+				this.sensorsData = data.sensors;
+				this.sensorsPath = new Array(...Object.keys(data.temp));
+				let tempData     = data.temp;
+				if(this.sensorsData && tempData) {
+					for(let e of Object.values(this.sensorsData)) {
+						e.sort(this.sortFunc);
 
-					for(let i of Object.values(e)) {
-						let sensor = i.title || i.item;
+						for(let i of Object.values(e)) {
+							let sensor = i.title || i.item;
 
-						if(i.sources === undefined) {
-							continue;
-						};
-
-						i.sources.sort(this.sortFunc);
-
-						for(let j of i.sources) {
-							let temp = j.temp;
-							let path = j.path;
-							let name = (j.label !== undefined) ? sensor + " / " + j.label :
-								(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
-
-							if(temp !== undefined) {
-								temp = this.formatTemp(temp);
+							if(i.sources === undefined) {
+								continue;
 							};
 
-							let temp_hot      = this.tempHot;
-							let temp_critical = this.tempCritical;
-							let tpoints       = j.tpoints;
+							i.sources.sort(this.sortFunc);
 
-							if(tpoints) {
-								for(let i of Object.values(tpoints)) {
-									let t = this.formatTemp(i.temp);
-									if(i.type === 'critical' || i.type === 'emergency') {
-										temp_critical = t;
-									}
-									else if(i.type === 'hot' || i.type === 'max') {
-										temp_hot = t;
+							for(let j of i.sources) {
+								let path = j.path;
+								let temp = tempData[path];
+								let name = (j.label !== undefined) ? sensor + " / " + j.label :
+									(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
+
+								if(temp !== undefined && temp !== null) {
+									temp = this.formatTemp(temp);
+								};
+
+								let temp_hot      = this.tempHot;
+								let temp_critical = this.tempCritical;
+								let tpoints       = j.tpoints;
+
+								if(tpoints) {
+									for(let i of Object.values(tpoints)) {
+										let t = this.formatTemp(i.temp);
+										if(i.type === 'critical' || i.type === 'emergency') {
+											temp_critical = t;
+										}
+										else if(i.type === 'hot' || i.type === 'max') {
+											temp_hot = t;
+										};
+									};
+								};
+
+								if(!(path in this.tempSources)) {
+									this.tempSources[path] = {
+										name,
+										path,
+										temp: [ [ new Date().getTime(), temp || 0 ] ],
+										temp_hot,
+										temp_critical,
+										tpoints,
 									};
 								};
 							};
+						};
+					};
+				};
+			};
+			return this.tempSources;
+		});
+	},
 
-							if(!(path in this.tempSources)) {
-								this.tempSources[path] = {
-									name,
-									path,
-									temp: [],
-									temp_hot,
-									temp_critical,
-									tpoints,
-								};
+	getTempData() {
+		return this.callTempData(this.sensorsPath).then(data => {
+			if(data) {
+				let tempData = data.temp;
+				if(this.sensorsData && tempData) {
+					for(let [path, temp] of Object.entries(tempData)) {
+						if(path in this.tempSources) {
+							if(temp !== undefined && temp !== null) {
+								temp = this.formatTemp(temp);
 							};
-
 							let temp_array = this.tempSources[path].temp;
 							temp_array.push([ new Date().getTime(), temp || 0 ]);
 							if(temp_array.length > this.tempBufferSize) {
@@ -247,7 +280,6 @@ return view.extend({
 	pollData() {
 		poll.add(L.bind(function() {
 			return this.getTempData().then(L.bind(function(datasets) {
-
 				for(let gi = 0; gi < this.graphPolls.length; gi++) {
 					let ctx = this.graphPolls[gi];
 
@@ -339,7 +371,7 @@ return view.extend({
 							((info.peak > y_peaks.t1) ? y_peaks.t1 + y_peaks.incr : y_peaks.t1);
 					} else {
 						let mult  = info.peak / div;
-							mult  = (mult < 5) ? 2 : ((mult < 50) ? 10 : ((mult < 500) ? 100 : 1000));
+						    mult  = (mult < 5) ? 2 : ((mult < 50) ? 10 : ((mult < 500) ? 100 : 1000));
 						info.peak = info.peak + (mult * div) - (info.peak % (mult * div));
 					};
 
@@ -363,7 +395,6 @@ return view.extend({
 							let x = j * ctx.step;
 
 							y  = ctx.height - Math.floor(values[i][j] * data_scale);
-							//y -= Math.floor(y % (1 / data_scale));
 							y  = isNaN(y) ? ctx.height + 1 : y;
 							pt += ` ${x},${y}`;
 						};
@@ -401,7 +432,7 @@ return view.extend({
 	load() {
 		return Promise.all([
 			this.loadSVG(L.resource('svg/temperature.svg')),
-			this.getTempData(),
+			this.getSensorsData(),
 		]);
 	},
 
