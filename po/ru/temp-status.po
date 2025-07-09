@@ -18,9 +18,6 @@ msgstr "(%d минутное окно, %d секундный интервал)"
 msgid "Average:"
 msgstr "Средняя:"
 
-msgid "Critical:"
-msgstr "Критическая:"
-
 msgid "Hide"
 msgstr "Скрыть"
 
@@ -32,6 +29,9 @@ msgstr "Минимальная:"
 
 msgid "No temperature sensors available"
 msgstr "Нет доступных датчиков температуры"
+
+msgid "Overheat:"
+msgstr "Перегрев:"
 
 msgid "Peak:"
 msgstr "Пиковая:"

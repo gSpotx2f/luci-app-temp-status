@@ -11,7 +11,7 @@ document.head.append(E('style', {'type': 'text/css'},
 :root {
 	--app-temp-status-temp: #147aff;
 	--app-temp-status-hot: orange;
-	--app-temp-status-crit: red;
+	--app-temp-status-overheat: red;
 }
 .svg_background {
 	width: 100%;
@@ -31,8 +31,8 @@ document.head.append(E('style', {'type': 'text/css'},
 .hot {
 	border-color: var(--app-temp-status-hot);
 }
-.crit {
-	border-color: var(--app-temp-status-crit);
+.overheat {
+	border-color: var(--app-temp-status-overheat);
 }
 svg line.grid {
 	stroke: black;
@@ -57,8 +57,8 @@ svg #hot_line {
 	stroke: var(--app-temp-status-hot);
 	stroke-width: 1;
 }
-svg #crit_line {
-	stroke: var(--app-temp-status-crit);
+svg #overheat_line {
+	stroke: var(--app-temp-status-overheat);
 	stroke-width: 1;
 }
 `));
@@ -68,7 +68,7 @@ Math.log2 = Math.log2 || (x => Math.log(x) * Math.LOG2E);
 return view.extend({
 	tempHot       : 95,
 
-	tempCritical  : 105,
+	tempOverheat  : 105,
 
 	pollInterval  : 3,
 
@@ -82,13 +82,13 @@ return view.extend({
 
 	graphPolls    : [],
 
-	callSensors: rpc.declare({
+	callSensors   : rpc.declare({
 		object: 'luci.temp-status',
 		method: 'getSensors',
 		expect: { '': {} },
 	}),
 
-	callTempData: rpc.declare({
+	callTempData  : rpc.declare({
 		object: 'luci.temp-status',
 		method: 'getTempData',
 		params: [ 'tpaths' ],
@@ -132,20 +132,27 @@ return view.extend({
 									temp = this.formatTemp(temp);
 								};
 
-								let temp_hot      = this.tempHot;
-								let temp_critical = this.tempCritical;
+								let temp_hot      = NaN;
+								let temp_overheat = NaN;
 								let tpoints       = j.tpoints;
 
 								if(tpoints) {
 									for(let i of Object.values(tpoints)) {
 										let t = this.formatTemp(i.temp);
-										if(i.type === 'critical' || i.type === 'emergency') {
-											temp_critical = t;
+										if(i.type === 'max' || i.type === 'critical' || i.type === 'emergency') {
+											if(!(temp_overheat <= t)) {
+												temp_overheat = t;
+											};
 										}
-										else if(i.type === 'hot' || i.type === 'max') {
+										else if(i.type === 'hot') {
 											temp_hot = t;
 										};
 									};
+								};
+
+								if(isNaN(temp_hot) && isNaN(temp_overheat)) {
+									temp_hot      = this.tempHot;
+									temp_overheat = this.tempOverheat;
 								};
 
 								if(!(path in this.tempSources)) {
@@ -154,7 +161,7 @@ return view.extend({
 										path,
 										temp: [ [ new Date().getTime(), temp || 0 ] ],
 										temp_hot,
-										temp_critical,
+										temp_overheat,
 										tpoints,
 									};
 								};
@@ -223,12 +230,12 @@ return view.extend({
 		};
 
 		let info = {
-			line_current: [],
-			line_average: [],
-			line_peak   : [],
-			line_min    : [],
-			hot_line    : svg.firstElementChild.getElementById('hot_line'),
-			crit_line   : svg.firstElementChild.getElementById('crit_line'),
+			line_current : [],
+			line_average : [],
+			line_peak    : [],
+			line_min     : [],
+			hot_line     : svg.firstElementChild.getElementById('hot_line'),
+			overheat_line: svg.firstElementChild.getElementById('overheat_line'),
 		};
 
 		/* prefill datasets */
@@ -298,7 +305,7 @@ return view.extend({
 					let info           = ctx.info;
 					let y_peaks        = ctx.y_peaks;
 					let temp_hot       = datasets[ctx.tpath].temp_hot;
-					let temp_crit      = datasets[ctx.tpath].temp_critical;
+					let temp_overheat  = datasets[ctx.tpath].temp_overheat;
 					let data_scale     = 0;
 					let data_wanted    = ctx.data_wanted;
 					let last_timestamp = NaN;
@@ -406,16 +413,20 @@ return view.extend({
 					};
 
 					/* hot line y */
-					info.hot_line.setAttribute(
-						'y1', ctx.height - Math.floor(temp_hot * data_scale));
-					info.hot_line.setAttribute(
-						'y2', ctx.height - Math.floor(temp_hot * data_scale));
+					if(!isNaN(temp_hot)) {
+						info.hot_line.setAttribute(
+							'y1', ctx.height - Math.floor(temp_hot * data_scale));
+						info.hot_line.setAttribute(
+							'y2', ctx.height - Math.floor(temp_hot * data_scale));
+					};
 
-					/* critical line y */
-					info.crit_line.setAttribute(
-						'y1', ctx.height - Math.floor(temp_crit * data_scale));
-					info.crit_line.setAttribute(
-						'y2', ctx.height - Math.floor(temp_crit * data_scale));
+					/* overheat line y */
+					if(!isNaN(temp_overheat)) {
+						info.overheat_line.setAttribute(
+							'y1', ctx.height - Math.floor(temp_overheat * data_scale));
+						info.overheat_line.setAttribute(
+							'y2', ctx.height - Math.floor(temp_overheat * data_scale));
+					};
 
 					info.label_25 = 0.25 * info.peak;
 					info.label_50 = 0.50 * info.peak;
@@ -454,11 +465,11 @@ return view.extend({
 			map.append(tabs);
 
 			for(let i of Object.values(tsources)) {
-				let tsource_name    = i.name;
-				let tsource_path    = i.path;
-				let tsource_hot     = i.temp_hot;
-				let tsource_crit    = i.temp_critical;
-				let tsource_tpoints = i.tpoints;
+				let tsource_name     = i.name;
+				let tsource_path     = i.path;
+				let tsource_hot      = i.temp_hot;
+				let tsource_overheat = i.temp_overheat;
+				let tsource_tpoints  = i.tpoints;
 
 				if(!tsource_name || !tsource_path) {
 					continue;
@@ -500,28 +511,32 @@ return view.extend({
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Peak:'))),
 							E('td', { 'class': 'td', 'data-graph': 'temp_peak' }, '-'),
 						]),
-						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend hot' }, _('Hot:'))),
-							E('td', { 'class': 'td', 'data-graph': 'temp_hot' }, tsource_hot + ' °C'),
+						(!isNaN(tsource_hot) ?
+							E('tr', { 'class': 'tr' }, [
+								E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend hot' }, _('Hot:'))),
+								E('td', { 'class': 'td', 'data-graph': 'temp_hot' }, tsource_hot + ' °C'),
 
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-						]),
-						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend crit' }, _('Critical:'))),
-							E('td', { 'class': 'td', 'data-graph': 'temp_crit' }, tsource_crit + ' °C'),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+							]) : ''
+						),
+						(!isNaN(tsource_overheat) ?
+							E('tr', { 'class': 'tr' }, [
+								E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend overheat' }, _('Overheat:'))),
+								E('td', { 'class': 'td', 'data-graph': 'temp_overheat' }, tsource_overheat + ' °C'),
 
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-							E('td', { 'class': 'td right top' }),
-						]),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+								E('td', { 'class': 'td right top' }),
+							]) : ''
+						),
 					]),
 					E('br'),
 					tpoints_section || '',

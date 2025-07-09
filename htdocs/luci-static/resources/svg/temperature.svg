@@ -14,5 +14,5 @@
 	<text id="label_25" x="20" y="74%"> </text>
 
 	<line id="hot_line" class="hot" x1="0" y1="-1" x2="100%" y2="-1" />
-	<line id="crit_line" class="crit" x1="0" y1="-1" x2="100%" y2="-1" />
+	<line id="overheat_line" class="overheat" x1="0" y1="-1" x2="100%" y2="-1" />
 </svg>

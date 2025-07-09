@@ -7,9 +7,6 @@ msgstr ""
 msgid "Average:"
 msgstr ""
 
-msgid "Critical:"
-msgstr ""
-
 msgid "Hide"
 msgstr ""
 
@@ -20,6 +17,9 @@ msgid "Minimum:"
 msgstr ""
 
 msgid "No temperature sensors available"
+msgstr ""
+
+msgid "Overheat:"
 msgstr ""
 
 msgid "Peak:"

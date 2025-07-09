@@ -75,7 +75,7 @@ function getHwmonData(tDevPath, tempData) {
 								if(tPointMax) {
 									tPoints['2'] = { type: 'max', temp: int(tPointMax) };
 								}
-								if(deviceDirPath && (!tPoints || length(tPoints) == 0)) {
+								if(deviceDirPath && length(tPoints) == 0) {
 									tPoints = (findTPoints(deviceDirPath) || tPoints);
 								}
 								let sDict = {
@@ -136,7 +136,7 @@ function getThermalData(tDevPath, tempData) {
 						path  : tempFilePath,
 						temp  : int(temp),
 					};
-					if(length(tPoints) > 0) {
+					if(tPoints && length(tPoints) > 0) {
 						sDict['tpoints'] = tPoints;
 					}
 					let tDict = {
