@@ -12,11 +12,38 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "Language: zh-cn\n"
 
+msgid "(%d minute window, %d second interval)"
+msgstr "（最近 %d 分钟信息，每 %d 秒刷新）"
+
+msgid "Average:"
+msgstr "平均："
+
+msgid "Hide"
+msgstr "隐藏"
+
+msgid "Hot:"
+msgstr "最热："
+
+msgid "Minimum:"
+msgstr "最低："
+
 msgid "No temperature sensors available"
 msgstr "温度传感器不可用"
+
+msgid "Overheat:"
+msgstr "过热："
+
+msgid "Peak:"
+msgstr "峰值："
 
 msgid "Sensor"
 msgstr "传感器"
 
+msgid "Show hidden sensors"
+msgstr "显示已隐藏的传感器"
+
 msgid "Temperature"
 msgstr "温度"
+
+msgid "This page displays the temperature sensors data."
+msgstr "此页面显示温度传感器的信息。"
