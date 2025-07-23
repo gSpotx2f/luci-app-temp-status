@@ -119,104 +119,106 @@ return baseclass.extend({
 	makeTempTableContent() {
 		this.tempTable.innerHTML = '';
 		this.tempTable.append(
-			E('tr', { 'class': 'tr table-titles' }, [
-				E('th', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
-				E('th', { 'class': 'th left' }, _('Temperature')),
-				E('th', { 'class': 'th right', 'width': '1%' }, ' '),
-			])
-		);
+				E('tr', { 'class': 'tr table-titles' }, [
+					E('th', { 'class': 'th left', 'width': '33%' }, _('Sensor')),
+					E('th', { 'class': 'th left' }, _('Temperature')),
+					E('th', { 'class': 'th right', 'width': '1%' }, ' '),
+				])
+			);
 
-		for(let [k, v] of Object.entries(this.sensorsData)) {
-			v.sort(this.sortFunc);
+		if(this.sensorsData && this.tempData) {
+			for(let [k, v] of Object.entries(this.sensorsData)) {
+				v.sort(this.sortFunc);
 
-			for(let i of Object.values(v)) {
-				let sensor = i.title || i.item;
+				for(let i of Object.values(v)) {
+					let sensor = i.title || i.item;
 
-				if(i.sources === undefined) {
-					continue;
-				};
-
-				i.sources.sort(this.sortFunc);
-
-				for(let j of i.sources) {
-					if(this.hiddenItems.has(j.path)) {
+					if(i.sources === undefined) {
 						continue;
 					};
 
-					let temp = this.tempData[j.path];
-					let name = (j.label !== undefined) ? sensor + " / " + j.label :
-						(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
+					i.sources.sort(this.sortFunc);
 
-					if(temp !== undefined && temp !== null) {
-						temp = this.formatTemp(temp);
-					};
+					for(let j of i.sources) {
+						if(this.hiddenItems.has(j.path)) {
+							continue;
+						};
 
-					let tempHot       = NaN;
-					let tempOverheat  = NaN;
-					let tpoints       = j.tpoints;
-					let tpointsString = '';
+						let temp = this.tempData[j.path];
+						let name = (j.label !== undefined) ? sensor + " / " + j.label :
+							(j.item !== undefined) ? sensor + " / " + j.item.replace(/_input$/, "") : sensor
 
-					if(tpoints) {
-						for(let i of Object.values(tpoints)) {
-							let t = this.formatTemp(i.temp);
-							tpointsString += `&#10;${i.type}: ${t} °C`;
+						if(temp !== undefined && temp !== null) {
+							temp = this.formatTemp(temp);
+						};
 
-							if(i.type == 'max' || i.type == 'critical' || i.type == 'emergency') {
-								if(!(tempOverheat <= t)) {
-									tempOverheat = t;
+						let tempHot       = NaN;
+						let tempOverheat  = NaN;
+						let tpoints       = j.tpoints;
+						let tpointsString = '';
+
+						if(tpoints) {
+							for(let i of Object.values(tpoints)) {
+								let t = this.formatTemp(i.temp);
+								tpointsString += `&#10;${i.type}: ${t} °C`;
+
+								if(i.type == 'max' || i.type == 'critical' || i.type == 'emergency') {
+									if(!(tempOverheat <= t)) {
+										tempOverheat = t;
+									};
+								}
+								else if(i.type == 'hot') {
+									tempHot = t;
 								};
-							}
-							else if(i.type == 'hot') {
-								tempHot = t;
 							};
 						};
+
+						if(isNaN(tempHot) && isNaN(tempOverheat)) {
+							tempHot      = this.tempHot;
+							tempOverheat = this.tempOverheat;
+						};
+
+						let rowStyle = (temp >= tempOverheat) ? ' temp-status-overheat':
+							(temp >= tempHot) ? ' temp-status-hot' : '';
+
+						this.tempTable.append(
+							E('tr', {
+								'class'    : 'tr' + rowStyle,
+								'data-path': j.path ,
+							}, [
+								E('td', {
+										'class'     : 'td left',
+										'data-title': _('Sensor')
+									},
+									(tpointsString.length > 0) ?
+									`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
+									name
+								),
+								E('td', {
+										'class'     : 'td left',
+										'data-title': _('Temperature')
+									},
+									(temp === undefined || temp === null) ? '-' : temp + ' °C'
+								),
+								E('td', {
+										'class'     : 'td right',
+										'data-title': _('Hide'),
+										'title'     : _('Hide'),
+									},
+									E('span', {
+										'class': 'temp-status-hide-item',
+										'title': _('Hide'),
+										'click': () => this.hideItem(j.path),
+									}, '&#935;'),
+								),
+							])
+						);
 					};
-
-					if(isNaN(tempHot) && isNaN(tempOverheat)) {
-						tempHot      = this.tempHot;
-						tempOverheat = this.tempOverheat;
-					};
-
-					let rowStyle = (temp >= tempOverheat) ? ' temp-status-overheat':
-						(temp >= tempHot) ? ' temp-status-hot' : '';
-
-					this.tempTable.append(
-						E('tr', {
-							'class'    : 'tr' + rowStyle,
-							'data-path': j.path ,
-						}, [
-							E('td', {
-									'class'     : 'td left',
-									'data-title': _('Sensor')
-								},
-								(tpointsString.length > 0) ?
-								`<span style="cursor:help; border-bottom:1px dotted" data-tooltip="${tpointsString}">${name}</span>` :
-								name
-							),
-							E('td', {
-									'class'     : 'td left',
-									'data-title': _('Temperature')
-								},
-								(temp === undefined || temp === null) ? '-' : temp + ' °C'
-							),
-							E('td', {
-									'class'     : 'td right',
-									'data-title': _('Hide'),
-									'title'     : _('Hide'),
-								},
-								E('span', {
-									'class': 'temp-status-hide-item',
-									'title': _('Hide'),
-									'click': () => this.hideItem(j.path),
-								}, '&#935;'),
-							),
-						])
-					);
 				};
 			};
 		};
 
-		if(this.tempTable.childNodes.length === 1) {
+		if(this.tempTable.childNodes.length == 1) {
 			this.tempTable.append(
 				E('tr', { 'class': 'tr placeholder' },
 					E('td', { 'class': 'td' },
@@ -244,22 +246,22 @@ return baseclass.extend({
 	load() {
 		this.restoreSettingsFromLocalStorage();
 		if(this.sensorsData) {
-			return L.resolveDefault(this.callTempData(this.sensorsPath), null);
+			return (this.sensorsPath.length > 0) ?
+				L.resolveDefault(this.callTempData(this.sensorsPath), null) :
+				new Promise(r => r(null));
 		} else {
 			return L.resolveDefault(this.callSensors(), null);
 		};
 	},
 
 	render(data) {
-		if(!data) {
-			return;
+		if(data) {
+			if(!this.sensorsData) {
+				this.sensorsData = data.sensors;
+				this.sensorsPath = data.temp && new Array(...Object.keys(data.temp));
+			};
+			this.tempData = data.temp;
 		};
-
-		if(!this.sensorsData) {
-			this.sensorsData = data.sensors;
-			this.sensorsPath = new Array(...Object.keys(data.temp));
-		};
-		this.tempData = data.temp;
 
 		if(!this.sensorsData || !this.tempData) {
 			return;
