@@ -9,12 +9,12 @@ document.head.append(E('style', {'type': 'text/css'},
     --app-temp-status-hot-color: #fff7e2;
     --app-temp-status-overheat-color: #ffe9e8;
 }
+
 :root[data-darkmode="true"] {
     --app-temp-status-font-color: #fff;
     --app-temp-status-hot-color: #8d7000;
     --app-temp-status-overheat-color: #a93734;
 }
-
 
 .temp-status-table .sensor-cell-content {
     padding: 4px 8px;
@@ -30,6 +30,7 @@ document.head.append(E('style', {'type': 'text/css'},
     background-color: var(--app-temp-status-hot-color) !important;
     color: var(--app-temp-status-font-color) !important;
 }
+
 .temp-status-table .sensor-cell-overheat {
     background-color: var(--app-temp-status-overheat-color) !important;
     color: var(--app-temp-status-font-color) !important;
