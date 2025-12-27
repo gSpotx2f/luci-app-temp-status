@@ -63,7 +63,7 @@ document.head.append(E('style', {'type': 'text/css'},
 return baseclass.extend({
 	title       : _('Temperature'),
 
-	viewName    : 'temp_status',
+	viewName    : 'temp-status',
 
 	tempHot     : 95,
 
@@ -280,7 +280,7 @@ return baseclass.extend({
 		if (this.sensorsData) {
 			return (this.sensorsPath.length > 0) ?
 				L.resolveDefault(this.callTempData(this.sensorsPath), null) :
-				new Promise(r => r(null));
+				Promise.resolve(null);
 		} else {
 			return L.resolveDefault(this.callSensors(), null);
 		}
