@@ -2,44 +2,41 @@ msgid ""
 msgstr "Content-Type: text/plain; charset=UTF-8"
 
 msgid "(%d minute window, %d second interval)"
-msgstr ""
+msgstr "（最近 %d 分鐘、每隔 %d 秒更新）"
 
 msgid "Average:"
-msgstr ""
+msgstr "平均："
 
 msgid "Hide"
-msgstr ""
+msgstr "隱藏"
 
 msgid "Hot:"
-msgstr ""
+msgstr "最熱："
 
 msgid "Minimum:"
-msgstr ""
+msgstr "最小："
 
 msgid "No temperature sensors available"
-msgstr ""
+msgstr "沒有溫度感測器"
 
 msgid "Overheat:"
-msgstr ""
+msgstr "燙燙燙："
 
 msgid "Peak:"
-msgstr ""
+msgstr "峰值："
 
 msgid "Sensor"
-msgstr ""
+msgstr "感測器"
 
 msgid "Show hidden sensors"
-msgstr ""
-
-msgid "Switch view"
-msgstr ""
+msgstr "顯示隱藏感測器"
 
 msgid "Temperature"
-msgstr ""
+msgstr "溫度"
 
 msgid "Temperature:"
-msgstr ""
+msgstr "溫度："
 
 msgid "This page displays the temperature sensors data."
-msgstr ""
+msgstr "這個頁面顯示溫度感測器讀數。"
 

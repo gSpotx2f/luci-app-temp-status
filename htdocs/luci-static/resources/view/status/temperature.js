@@ -499,7 +499,7 @@ return view.extend({
 					E('br'),
 					E('table', { 'class': 'table', 'style': 'width:100%;table-layout:fixed' }, [
 						E('tr', { 'class': 'tr' }, [
-							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend temp' }, _('Temperature') + ':')),
+							E('td', { 'class': 'td right top' }, E('strong', { 'class': 'graph_legend temp' }, _('Temperature:'))),
 							E('td', { 'class': 'td', 'data-graph': 'temp_cur' }, '-'),
 
 							E('td', { 'class': 'td right top' }, E('strong', {}, _('Minimum:'))),
