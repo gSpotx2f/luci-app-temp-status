@@ -86,12 +86,14 @@ document.head.append(E('style', {'type': 'text/css'},
 	display: inline-block;
 	cursor: pointer;
 	margin: 2px 4px 2px 0 !important;
-	padding: 2px 4px;
-	border: 1px dotted;
+	padding: 3px 5px;
+	border: 1px solid;
+	border-color: transparent;
 	-webkit-border-radius: 4px;
 	-moz-border-radius: 4px;
 	border-radius: 4px;
 	opacity: 0.7;
+	background-color: rgba(100 100 100 / 0.2);
 }
 .temp-status-button:hover {
 	opacity: 0.9;
@@ -103,14 +105,19 @@ document.head.append(E('style', {'type': 'text/css'},
 	display: inline-block;
 	cursor: pointer;
 	margin: 0 0.5em 0 0 !important;
-	padding: 0 4px;
+	padding: 1px 5px;
 	border: 1px dotted;
 	-webkit-border-radius: 4px;
 	-moz-border-radius: 4px;
 	border-radius: 4px;
-	opacity: 0.7;
+	opacity: 0.6;
+	background-color: rgba(100 100 100 / 0.2);
+	font-weight: bold;
 }
 .temp-status-hide-item:hover {
+	opacity: 0.9;
+}
+.temp-status-hide-item:active {
 	opacity: 1.0;
 }
 `));
@@ -443,14 +450,12 @@ return baseclass.extend({
 			E('div', { 'id': 'temp-status-buttons-wrapper' }, [
 				E('span', {
 					'class': 'temp-status-button',
-					'href' : 'javascript:void(0)',
 					'click': () => this.switchView(),
 				}, _('Switch view')),
 				E('span', {
 					'id'   : 'temp-status-unhide-all',
 					'class': 'temp-status-button',
 					'style': `display:${(this.hiddenItems.size > 0) ? 'inline-block' : 'none'}`,
-					'href' : 'javascript:void(0)',
 					'click': () => this.unhideAllItems(),
 				}, [
 					_('Show hidden sensors'),
