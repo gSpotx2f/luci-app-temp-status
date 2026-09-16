@@ -1,0 +1,52 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: egemen <95934830+projectaccc@users.noreply.github.com>\n"
+"Language-Team: \n"
+"Language: tr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.9\n"
+
+msgid "(%d minute window, %d second interval)"
+msgstr "(%d dakikalık aralık, %d saniyelik sıklık)"
+
+msgid "Average:"
+msgstr "Ortalama:"
+
+msgid "Hide"
+msgstr "Gizle"
+
+msgid "Hot:"
+msgstr "Sıcak:"
+
+msgid "Minimum:"
+msgstr "En Düşük:"
+
+msgid "No temperature sensors available"
+msgstr "Kullanılabilir sıcaklık sensörü yok"
+
+msgid "Overheat:"
+msgstr "Aşırı Isınma:"
+
+msgid "Peak:"
+msgstr "En Yüksek:"
+
+msgid "Sensor"
+msgstr "Sensör"
+
+msgid "Show hidden sensors"
+msgstr "Gizlenmiş sensörleri göster"
+
+msgid "Switch view"
+msgstr "Görünümü değiştir"
+
+msgid "Temperature"
+msgstr "Sıcaklık"
+
+msgid "This page displays the temperature sensors data."
+msgstr "Bu sayfada sıcaklık sensörü verileri görüntülenir."
